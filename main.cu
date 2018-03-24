@@ -48,17 +48,7 @@ __global__ void nn_diff_add(double* output, double* output_add, int column_size,
 		   }
 		}
 }
-__global__ void nn_weight_update(double* input, double* weight, double learning_rate, int location, int column_size, int size){
-	   int i = blockDim.x * blockIdx.x + threadIdx.x;
-	   if(i < size){
-		   int idx = location*column_size+i;
-		   printf("i:%d location:%d column_size:%d weight:%f index:%d input:%d\n", i, location, column_size, idx, weight[idx], input[i]);
-		   weight[idx] = weight[idx] + learning_rate * (input[i] - weight[location*column_size+i]);
-		   printf("i:%d location:%d column_size:%d weight:%f index:%d input:%d\n", i, location, column_size, idx, weight[idx], input[i]);
-	   }
-}
-
-int nn_find_minimum(double* output_add){
+__device__ int nn_find_minimum(double* output_add){
 	double min = 9999999;
 	int min_loc = -1;
 	for (int idx=0; idx < SIZE/COLUMN_SIZE; idx++){
@@ -69,6 +59,18 @@ int nn_find_minimum(double* output_add){
 	}
 	return min_loc;
 }
+__global__ void nn_weight_update(double* input, double* weight, double learning_rate, double* output_add, int column_size, int size){
+		int location = nn_find_minimum(output_add);
+		int i = blockDim.x * blockIdx.x + threadIdx.x;
+		if(i < size){
+		   int idx = location*column_size+i;
+		   printf("i:%d location:%d column_size:%d weight:%f index:%d input:%d\n", i, location, column_size, idx, weight[idx], input[i]);
+		   weight[idx] = weight[idx] + learning_rate * (input[i] - weight[location*column_size+i]);
+		   printf("i:%d location:%d column_size:%d weight:%f index:%d input:%d\n", i, location, column_size, idx, weight[idx], input[i]);
+	   }
+}
+
+
 
 // MAIN FUNCTION
 int main(){/*
@@ -118,10 +120,7 @@ int main(){/*
 
 	nn_diff<<< COLUMN_SIZE ,1 >>>(dev_input,dev_weight,dev_output,COLUMN_SIZE,SIZE); // output = (input - weight)^2
 	nn_diff_add<<< ROW_SIZE-1,1 >>>(dev_output,dev_output_add,COLUMN_SIZE,ROW_SIZE); //output_add = Addition of all the columns in a row
-	cudaMemcpy(output_add, dev_output_add ,sizeof(output_add), cudaMemcpyDeviceToHost);
-	cudaCheckErrors("cudamemcpy or cuda kernel fail");
-	int min_loc = nn_find_minimum(output_add);     // Check for min in output_add
-	nn_weight_update<<< COLUMN_SIZE ,1 >>>(dev_input,dev_weight,learning_rate, min_loc, COLUMN_SIZE,COLUMN_SIZE); //output_add = Addition of all the columns in a row
+	nn_weight_update<<< COLUMN_SIZE ,1 >>>(dev_input,dev_weight,learning_rate, dev_output_add, COLUMN_SIZE,COLUMN_SIZE); //output_add = Addition of all the columns in a row
 	cudaMemcpy(weight, dev_weight ,sizeof(weight), cudaMemcpyDeviceToHost);
 	cudaCheckErrors("cudamemcpy or cuda kernel fail");
 
