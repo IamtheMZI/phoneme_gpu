@@ -1,5 +1,5 @@
 NVCC = /usr/local/cuda-9.1/bin/nvcc
-all: main run git
+all: main run clean git
 main:	main.o
 	$(NVCC) main.o -o main
 main.o:	main.cu
