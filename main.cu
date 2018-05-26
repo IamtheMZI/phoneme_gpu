@@ -8,7 +8,7 @@
 #include <time.h>
 
 // FUNCTION DEFINITIONS
-__global__ void nn_diff(double* input,double* weight, double* output, int column_size);
+__global__ void nn_diff(float* input,float* weight, float* output, int column_size);
 
 // DEFINES
 #define SIZE 8
@@ -30,7 +30,7 @@ __global__ void nn_diff(double* input,double* weight, double* output, int column
 
 
 // OTHER FUNCTIONS
-__global__ void nn_diff(double* input,double* weight, double* output, int column_size, int size){
+__global__ void nn_diff(float* input,float* weight, float* output, int column_size, int size){
 	   int i = blockDim.x * blockIdx.x + threadIdx.x;
 	   if (i < size){
 		   int in_ind = i%column_size;
@@ -40,7 +40,7 @@ __global__ void nn_diff(double* input,double* weight, double* output, int column
 	   }
 }
 
-/*__global__ void nn_diff_add(double* output, double* output_add, int column_size, int size){
+/*__global__ void nn_diff_add(float* output, float* output_add, int column_size, int size){
 	   int i = blockDim.x * blockIdx.x + threadIdx.x;
 	   if(i <size){
 		   for(int p = 0; p < column_size; p++){
@@ -50,8 +50,8 @@ __global__ void nn_diff(double* input,double* weight, double* output, int column
 		}
 }*/
 
-__global__ void nn_diff_add(double* output, double* output_add, int column_size, int size){
-	/*extern*/ __shared__ double sdata[SIZE];
+__global__ void nn_diff_add(float* output, float* output_add, int column_size, int size){
+	/*extern*/ __shared__ float sdata[SIZE];
 	unsigned int tid = threadIdx.x;
 	unsigned int i = blockIdx.x*blockDim.x+threadIdx.x;
 	sdata[tid] = output[i];
@@ -66,8 +66,8 @@ __global__ void nn_diff_add(double* output, double* output_add, int column_size,
 
 	if (tid==0) output_add[blockIdx.x]=sdata[0];
 }
-__device__ int nn_find_minimum(double* output_add){
-	double min = 9999999;
+__device__ int nn_find_minimum(float* output_add){
+	float min = 9999999;
 	int min_loc = -1;
 	for (int idx=0; idx < SIZE/COLUMN_SIZE; idx++){
 		if(output_add[idx] < min){
@@ -77,7 +77,7 @@ __device__ int nn_find_minimum(double* output_add){
 	}
 	return min_loc;
 }
-__global__ void nn_weight_update(double* input, double* weight, double learning_rate, double* output_add, int column_size, int size){
+__global__ void nn_weight_update(float* input, float* weight, float learning_rate, float* output_add, int column_size, int size){
 		int location = nn_find_minimum(output_add);
 		int i = blockDim.x * blockIdx.x + threadIdx.x;
 		if(i < size){
@@ -93,15 +93,15 @@ __global__ void nn_weight_update(double* input, double* weight, double learning_
 // MAIN FUNCTION
 int main(){/*
 	// VARIABLES
-	double* input;
-	double* weight;
-	double* output;
+	float* input;
+	float* weight;
+	float* output;
 
 	// Allocate Variables
 	int in_size = 4;
-	input  = (double*) malloc(COLUMN_SIZE*sizeof(double));
-	weight = (double*) malloc(SIZE*sizeof(double));
-	output = (double*) malloc(in_size*sizeof(double));
+	input  = (float*) malloc(COLUMN_SIZE*sizeof(float));
+	weight = (float*) malloc(SIZE*sizeof(float));
+	output = (float*) malloc(in_size*sizeof(float));
 
 	for (	int idx=1; idx < COLUMN_SIZE; idx++){
 		 input[idx] = rand() % 10;
@@ -112,16 +112,16 @@ int main(){/*
 	for (	int idx=1; idx < in_size; idx++){
 			output[idx] = rand() % 10;
 	}*/
-	double input[4] = {1.0, 1.0, 0.0, 0.0};
-	double weight[8] = {0.2,0.6,0.5,0.9,0.8,0.4,0.7,0.3};
-	double output[4] = {0.0};
-	double output_add[2] = {0.0};
-	double learning_rate = 0.6;
+	float input[4] = {1.0, 1.0, 0.0, 0.0};
+	float weight[8] = {0.2,0.6,0.5,0.9,0.8,0.4,0.7,0.3};
+	float output[4] = {0.0};
+	float output_add[2] = {0.0};
+	float learning_rate = 0.6;
 	// Reset the GPUs
 	cudaDeviceReset();
 
 	// GPU Variable Declaration
-	double *dev_input,*dev_weight,*dev_output, *dev_output_add;
+	float *dev_input,*dev_weight,*dev_output, *dev_output_add;
 
 	// GPU Variable Allocation
 	cudaMalloc(&dev_input , sizeof(input));
