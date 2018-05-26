@@ -138,7 +138,7 @@ int main(){/*
 
     dim3 thrd_per_block(2,4);
     dim3 num_of_block(ROW_SIZE/thrd_per_block.x, SIZE/thrd_per_block.y);
-	nn_diff<<< num_of_block ,thrd_per_block >>>(dev_input,dev_weight,dev_output); // output = (input - weight)^2
+	nn_diff<<< 1 ,4 >>>(dev_input,dev_weight,dev_output); // output = (input - weight)^2
 //	nn_diff_add<<< ROW_SIZE-1,1 >>>(dev_output,dev_output_add,COLUMN_SIZE,ROW_SIZE); //output_add = Addition of all the columns in a row
 //	nn_weight_update<<< COLUMN_SIZE ,1 >>>(dev_input,dev_weight,learning_rate, dev_output_add, COLUMN_SIZE,COLUMN_SIZE); //output_add = Addition of all the columns in a row
 	cudaMemcpy(output, dev_output ,sizeof(output), cudaMemcpyDeviceToHost);
