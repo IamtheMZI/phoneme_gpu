@@ -33,7 +33,7 @@ __global__ void nn_diff(double* input,double* weight, double* output, int column
 __global__ void nn_diff(double* input,double** weight, double** output){
 	   int i = blockDim.x * blockIdx.x + threadIdx.x;
        int j = blockDim.y * blockIdx.y + threadIdx.y;
-	   //if (i < ROW_SIZE && j < COLUMN_SIZE)
+	   if (i < ROW_SIZE && j < COLUMN_SIZE)
        {
 		   output[i][j] = (input[i] - weight[i][j])*(input[i] - weight[i][j]);
 	   }
