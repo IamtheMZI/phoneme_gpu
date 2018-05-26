@@ -82,9 +82,9 @@ __global__ void nn_weight_update(float* input, float* weight, float learning_rat
 		int i = blockDim.x * blockIdx.x + threadIdx.x;
 		if(i < size){
 		   int idx = location*column_size+i;
-		   printf("i:%d location:%d column_size:%d weight:%f index:%d input:%d\n", i, location, column_size, idx, weight[idx], input[i]);
+		   printf("i:%d location:%d column_size:%d weight:%f index:%d input:%f\n", i, location, column_size, idx, weight[idx], input[i]);
 		   weight[idx] = weight[idx] + learning_rate * (input[i] - weight[location*column_size+i]);
-		   printf("i:%d location:%d column_size:%d weight:%f index:%d input:%d\n", i, location, column_size, idx, weight[idx], input[i]);
+		   printf("i:%d location:%d column_size:%d weight:%f index:%d input:%f\n", i, location, column_size, idx, weight[idx], input[i]);
 	   }
 }
 
