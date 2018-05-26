@@ -36,10 +36,11 @@ __global__ void nn_diff(double* input,double* weight, double* output, int column
 		   int in_ind = i%column_size;
 		   output[i] = (input[in_ind] - weight[i])*(input[in_ind] - weight[i]);
 		   printf("%d %f %d:%f %f\n",i, output[i], in_ind, input[in_ind], weight[i]);
+		   __syncthreads();
 	   }
 }
 
-__global__ void nn_diff_add(double* output, double* output_add, int column_size, int size){
+/*__global__ void nn_diff_add(double* output, double* output_add, int column_size, int size){
 	   int i = blockDim.x * blockIdx.x + threadIdx.x;
 	   if(i <size){
 		   for(int p = 0; p < column_size; p++){
@@ -47,6 +48,23 @@ __global__ void nn_diff_add(double* output, double* output_add, int column_size,
 			   printf("%d %d:%f %f\n",i, p, output[p+i*column_size], output_add[i]);
 		   }
 		}
+}*/
+
+__global__ void nn_diff_add(double* output, double* output_add, int column_size, int size){
+	/*extern*/ __shared__ double sdata[SIZE];
+	unsigned int tid = threadIdx.x;
+	unsigned int i = blockIdx.x*blockDim.x+threadIdx.x;
+	sdata[tid] = output[i];
+	__syncthreads();
+
+	for (unsigned int s=1; s<blockDim.x; s*=2){
+		if(tid% (2*s) == 0){
+			sdata[tid] += sdata[tid+s];
+		}
+		__syncthreads();
+	}
+
+	if (tid==0) output_add[blockIdx.x]=sdata[0];
 }
 __device__ int nn_find_minimum(double* output_add){
 	double min = 9999999;
