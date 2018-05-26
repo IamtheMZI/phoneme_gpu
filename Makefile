@@ -3,7 +3,7 @@ all: main run clean git
 main:	main.o
 	$(NVCC) main.o -o main
 main.o:	main.cu
-	$(NVCC) main.cu -c  main.o -arch=sm_30 --compiler-options -fPIC -shared
+	$(NVCC) main.cu -c  main.o  --compiler-options -fPIC -shared
 .PHONY:	clean run
 clean:
 	-rm main main.o
